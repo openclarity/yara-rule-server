@@ -1,0 +1,9 @@
+Dockerfile*
+.github/
+.git/
+bin/
+docs/
+vendor/
+test/
+*.yaml
+*.yml
