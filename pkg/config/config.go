@@ -23,8 +23,11 @@ import (
 )
 
 type Config struct {
-	LogLevel      string `mapstructure:"LOG_LEVEL"`
-	EnableJSONLog bool   `mapstructure:"ENABLE_JSON_LOG"`
+	LogLevel      string   `yaml:"log_level" mapstructure:"LOG_LEVEL"`
+	EnableJSONLog bool     `yaml:"enable_json_log" mapstructure:"ENABLE_JSON_LOG"`
+	RulePath      string   `yaml:"rule_path" mapstructure:"RULE_PATH"`
+	RuleURLs      []string `yaml:"rule_urls" mapstructure:"RULE_URLS"`
+	YaracPath     string   `yaml:"yarac_path" mapstructure:"YARAC_PATH"`
 }
 
 func LoadConfig(cfgFile string) *Config {
@@ -43,6 +46,7 @@ func LoadConfig(cfgFile string) *Config {
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match
+	setDefaults()
 
 	// If a config file is found, read it in.
 	err := viper.ReadInConfig()
@@ -54,4 +58,9 @@ func LoadConfig(cfgFile string) *Config {
 	cobra.CheckErr(err)
 
 	return cfg
+}
+
+func setDefaults() {
+	viper.SetDefault("LOG_LEVEL", "info")
+	viper.SetDefault("YARAC_PATH", "/usr/local/bin/yarac")
 }

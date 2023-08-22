@@ -17,14 +17,17 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     -ldflags="-s -w" \
     -o bin/yara-rule-server main.go
 
-FROM alpine:3.18
+FROM ubuntu:22.04
 
-RUN apk upgrade
-RUN apk add util-linux
+RUN apt update
+RUN apt install -y util-linux ca-certificates yara
+ADD https://raw.githubusercontent.com/Yara-Rules/rules/master/index_gen.sh /usr/local/bin
+RUN chmod 755 /usr/local/bin/index_gen.sh
 
 WORKDIR /app
 
 COPY --from=builder /build/bin/yara-rule-server ./yara-rule-server
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+
+WORKDIR /opt
 
 ENTRYPOINT ["/app/yara-rule-server"]

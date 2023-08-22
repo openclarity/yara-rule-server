@@ -23,6 +23,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/openclarity/yara-rule-server/pkg/config"
+	"github.com/openclarity/yara-rule-server/pkg/fileserver"
+	"github.com/openclarity/yara-rule-server/pkg/rules"
 )
 
 var (
@@ -69,9 +71,6 @@ func init() {
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
 	cfg = config.LoadConfig(cfgFile)
-	if cfg.LogLevel == "" {
-		cfg.LogLevel = "info"
-	}
 	fmt.Printf("Configuration: %+v", cfg)
 }
 
@@ -87,5 +86,10 @@ func initLogger() {
 }
 
 func run(cmd *cobra.Command, args []string) {
-
+	archives := rules.Download(cfg.RuleURLs, logger)
+	rules.Unarchive(archives, logger)
+	if err := rules.Compile(cfg.RulePath); err != nil {
+		logger.Fatalf("Falied to compile YARA rules: %v", err)
+	}
+	fileserver.Start(cfg.RulePath, logger)
 }
