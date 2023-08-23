@@ -8,7 +8,6 @@ env:
 
 jobs:
   verification:
-    needs: api-verification
     name: Verification
     runs-on: ubuntu-latest
     steps:
