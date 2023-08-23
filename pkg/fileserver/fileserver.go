@@ -21,10 +21,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func Start(path string, logger *logrus.Entry) {
-	logger.Infof("Rule file: %s", path)
+func Start(rulePath string, logger *logrus.Entry) {
+	logger.Infof("Rule file: %s", rulePath)
 	sFile := func(w http.ResponseWriter, req *http.Request) {
-		http.ServeFile(w, req, path)
+		http.ServeFile(w, req, rulePath)
 	}
 
 	http.HandleFunc("/", sFile)

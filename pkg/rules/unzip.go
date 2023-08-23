@@ -12,10 +12,11 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func Unarchive(archives []string, logger *logrus.Entry) {
+func unarchive(archives []string, logger *logrus.Entry) {
 	for i := range archives {
+		logger.Infof("Unarchive rules: file=%s", archives[i])
 		if err := unzip(archives[i], path.Dir(archives[i])); err != nil {
-			logger.Errorf("Fauled to uncrompress file=%s: %v", archives[i], err)
+			logger.Errorf("Failed to unacrhive file=%s: %v", archives[i], err)
 		}
 	}
 }

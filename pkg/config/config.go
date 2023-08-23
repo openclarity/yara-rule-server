@@ -23,11 +23,13 @@ import (
 )
 
 type Config struct {
-	LogLevel      string   `yaml:"log_level" mapstructure:"LOG_LEVEL"`
-	EnableJSONLog bool     `yaml:"enable_json_log" mapstructure:"ENABLE_JSON_LOG"`
-	RulePath      string   `yaml:"rule_path" mapstructure:"RULE_PATH"`
-	RuleURLs      []string `yaml:"rule_urls" mapstructure:"RULE_URLS"`
-	YaracPath     string   `yaml:"yarac_path" mapstructure:"YARAC_PATH"`
+	LogLevel           string   `yaml:"log_level" mapstructure:"LOG_LEVEL"`
+	EnableJSONLog      bool     `yaml:"enable_json_log" mapstructure:"ENABLE_JSON_LOG"`
+	RulePath           string   `yaml:"rule_path" mapstructure:"RULE_PATH"`
+	RuleURLs           []string `yaml:"rule_urls" mapstructure:"RULE_URLS"`
+	YaracPath          string   `yaml:"yarac_path" mapstructure:"YARAC_PATH"`
+	IndexGenPath       string   `yaml:"index_gen_path" mapstructure:"INDEX_GEN_PATH"`
+	RuleUpdateSchedule string   `yaml:"rule_update_schedule" mapstructure:"RULE_UPDATE_SCHEDULE"`
 }
 
 func LoadConfig(cfgFile string) *Config {
@@ -62,5 +64,7 @@ func LoadConfig(cfgFile string) *Config {
 
 func setDefaults() {
 	viper.SetDefault("LOG_LEVEL", "info")
-	viper.SetDefault("YARAC_PATH", "/usr/local/bin/yarac")
+	viper.SetDefault("YARAC_PATH", "/usr/bin/yarac")
+	viper.SetDefault("INDEX_GEN_PATH", "/usr/local/bin/index_gen.sh")
+	viper.SetDefault("RULE_UPDATE_SCHEDULE", "0 0 * * *")
 }

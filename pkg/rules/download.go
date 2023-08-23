@@ -11,7 +11,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func Download(urls []string, logger *logrus.Entry) []string {
+func download(rulePath string, urls []string, logger *logrus.Entry) []string {
 	archives := make([]string, 0)
 	for i := range urls {
 		u, err := url.Parse(urls[i])
@@ -20,7 +20,7 @@ func Download(urls []string, logger *logrus.Entry) []string {
 			continue
 		}
 
-		dirName := fmt.Sprintf("/opt%s", path.Dir(u.Path))
+		dirName := fmt.Sprintf("%s%s", path.Dir(rulePath), path.Dir(u.Path))
 		if err := os.MkdirAll(dirName, 0755); err != nil {
 			logger.Errorf("failed to create directory=%s: %v", dirName, err)
 		}

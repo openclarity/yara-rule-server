@@ -16,7 +16,6 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/sirupsen/logrus"
@@ -71,7 +70,6 @@ func init() {
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
 	cfg = config.LoadConfig(cfgFile)
-	fmt.Printf("Configuration: %+v", cfg)
 }
 
 func initLogger() {
@@ -86,10 +84,15 @@ func initLogger() {
 }
 
 func run(cmd *cobra.Command, args []string) {
-	archives := rules.Download(cfg.RuleURLs, logger)
-	rules.Unarchive(archives, logger)
-	if err := rules.Compile(cfg.RulePath); err != nil {
+	// First we need to download and compile rules before starting the server.
+	if err := rules.DownloadAndCompile(cfg, logger); err != nil {
 		logger.Fatalf("Falied to compile YARA rules: %v", err)
 	}
+
+	// Start scheduler
+	if err := rules.ScheduledDownload(cfg, logger); err != nil {
+		logger.Fatalf("failed to start download scheduler: %v", err)
+	}
+
 	fileserver.Start(cfg.RulePath, logger)
 }
