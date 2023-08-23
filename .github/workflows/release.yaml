@@ -1,0 +1,68 @@
+name: Release
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+
+permissions:
+  packages: write
+  contents: write
+
+env:
+  GO_VERSION: "1.20"
+
+jobs:
+  verification:
+    name: Verification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Check licenses
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: make license-check
+
+      - name: Setup Cloud Formation Linter with Latest Version
+        uses: scottbrenner/cfn-lint-action@v2
+
+      - name: Run verification
+        run: make check
+
+  build_and_push:
+    needs: verification
+    name: Build & Push
+    uses: ./.github/workflows/reusable-build-and-push.yml
+    with:
+      image_tag: ${{ github.ref_name }}
+      push: true
+      upload: false
+
+  main_release:
+    needs: build_and_push
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v4
+        with:
+          version: v1.16.0
+          args: release --clean --skip-validate
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
