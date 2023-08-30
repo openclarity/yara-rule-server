@@ -87,5 +87,5 @@ func initLogger() {
 }
 
 func run(cmd *cobra.Command, args []string) {
-
+	logger.Infoln("running command")
 }
