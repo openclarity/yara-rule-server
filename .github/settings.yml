@@ -2,10 +2,10 @@ repository:
   # See https://developer.github.com/v3/repos/#edit for all available settings.
 
   # The name of the repository. Changing this will rename the repository
-  name: vmclarity
+  name: yara-rule-server
 
   # A short description of the repository that will show up on GitHub
-  description: VMClarity is a tool for agentless detection and management of Virtual Machine Software Bill Of Materials (SBOM) and vulnerabilities
+  description: YARA rule server download and compile rules into one binary file.
 
   # A URL with more information about the repository
   homepage: openclarity.io
