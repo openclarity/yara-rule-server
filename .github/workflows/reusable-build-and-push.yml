@@ -1,0 +1,79 @@
+name: Build & Push
+
+on:
+  workflow_call:
+    inputs:
+      image_tag:
+        required: true
+        type: string
+        description: 'Image tag to build and push.'
+      push:
+        required: false
+        type: string
+        description: 'If set to true, push the image.'
+        default: false
+      upload:
+        required: false
+        type: string
+        description: 'If set to true, upload the image.'
+        default: false
+
+jobs:
+  timestamp:
+    runs-on: ubuntu-latest
+    outputs:
+      timestamp: ${{ steps.timestamp.outputs.timestamp }}
+    steps:
+      - name: Get current timestamp
+        id: timestamp
+        run: echo "::set-output name=timestamp::$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+
+  vmclarity-apiserver:
+    needs: timestamp
+    uses: ./.github/workflows/build-and-push-component.yaml
+    with:
+      dockerfile: Dockerfile.apiserver
+      image_name: vmclarity-apiserver
+      image_tag: ${{ inputs.image_tag }}
+      push: ${{ inputs.push }}
+      upload: ${{ inputs.upload }}
+
+  vmclarity-orchestrator:
+    needs: timestamp
+    uses: ./.github/workflows/build-and-push-component.yaml
+    with:
+      dockerfile: Dockerfile.orchestrator
+      image_name: vmclarity-orchestrator
+      image_tag: ${{ inputs.image_tag }}
+      push: ${{ inputs.push }}
+      upload: ${{ inputs.upload }}
+
+  vmclarity-ui-backend:
+    needs: timestamp
+    uses: ./.github/workflows/build-and-push-component.yaml
+    with:
+      dockerfile: Dockerfile.uibackend
+      image_name: vmclarity-ui-backend
+      image_tag: ${{ inputs.image_tag }}
+      push: ${{ inputs.push }}
+      upload: ${{ inputs.upload }}
+
+  vmclarity-ui:
+    needs: timestamp
+    uses: ./.github/workflows/build-and-push-component.yaml
+    with:
+      dockerfile: Dockerfile.ui
+      image_name: vmclarity-ui
+      image_tag: ${{ inputs.image_tag }}
+      push: ${{ inputs.push }}
+      upload: ${{ inputs.upload }}
+
+  vmclarity-cli:
+    needs: timestamp
+    uses: ./.github/workflows/build-and-push-component.yaml
+    with:
+      dockerfile: Dockerfile.cli
+      image_name: vmclarity-cli
+      image_tag: ${{ inputs.image_tag }}
+      push: ${{ inputs.push }}
+      upload: ${{ inputs.upload }}
