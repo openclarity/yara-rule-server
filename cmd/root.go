@@ -109,7 +109,7 @@ func run(cmd *cobra.Command, args []string) {
 	logger.Infoln("Yara rule download scheduler has been started.")
 
 	// Start file server
-	srv := fileserver.Start(cfg.RulePath, logger)
+	srv := fileserver.Start(cfg, logger)
 	logger.Infoln("Yara rule file server has been started.")
 
 	<-ctx.Done()

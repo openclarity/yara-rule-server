@@ -20,16 +20,18 @@ import (
 	"net/http"
 
 	"github.com/sirupsen/logrus"
+
+	"github.com/openclarity/yara-rule-server/pkg/config"
 )
 
-func Start(rulePath string, logger *logrus.Entry) *http.Server {
-	logger.Infof("Rule file: %s", rulePath)
+func Start(cfg *config.Config, logger *logrus.Entry) *http.Server {
+	logger.Infof("Rule file: %s", cfg.RulePath)
 	sFile := func(w http.ResponseWriter, req *http.Request) {
-		http.ServeFile(w, req, rulePath)
+		http.ServeFile(w, req, cfg.RulePath)
 	}
 
 	http.HandleFunc("/", sFile)
-	server := &http.Server{Addr: ":8080", Handler: nil}
+	server := &http.Server{Addr: cfg.ServerAddress, Handler: nil}
 	go func() {
 		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			logger.Fatalf("Failed to start http server: %v", err)
