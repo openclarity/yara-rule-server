@@ -16,6 +16,7 @@
 package rules
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -27,7 +28,12 @@ import (
 
 func DownloadAndCompile(cfg *config.Config, logger *logrus.Entry) error {
 	archives := download(cfg.RulePath, cfg.RuleURLs, logger)
-	unarchive(archives, logger)
+	if len(archives) == 0 {
+		return errors.New("there is no successfully downloaded rules")
+	}
+	if num := unarchive(archives, logger); num == 0 {
+		return errors.New("there is no successfully unarchived rules")
+	}
 
 	if err := generateIndex(cfg.IndexGenPath, logger); err != nil {
 		return fmt.Errorf("failed to generate index.yar: %v", err)
@@ -39,16 +45,16 @@ func DownloadAndCompile(cfg *config.Config, logger *logrus.Entry) error {
 	return nil
 }
 
-func ScheduledDownload(cfg *config.Config, logger *logrus.Entry) error {
+func ScheduledDownload(cfg *config.Config, logger *logrus.Entry) (*gocron.Scheduler, error) {
 	s := gocron.NewScheduler(time.UTC)
 
 	// cron expressions supported
 	if _, err := s.Cron(cfg.RuleUpdateSchedule).Do(DownloadAndCompile, cfg, logger); err != nil {
-		return fmt.Errorf("failed to create cron job: %v", err)
+		return nil, fmt.Errorf("failed to create cron job: %v", err)
 	}
 
 	// starts the scheduler asynchronously
 	s.StartAsync()
 
-	return nil
+	return s, nil
 }

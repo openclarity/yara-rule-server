@@ -29,7 +29,7 @@ func generateIndex(indexGenPATH string, logger *logrus.Entry) error {
 	if err != nil {
 		return fmt.Errorf("failed to run index_gen.sh: %v, %v", err, string(resultJsonB))
 	}
-	logger.Debugln(string(resultJsonB))
+	logger.Debugf("Running command: %s\nCommand output: %s", indexGenPATH, string(resultJsonB))
 
 	return nil
 }
@@ -41,7 +41,7 @@ func compile(yaracPATH, input, output string, logger *logrus.Entry) error {
 	if err != nil {
 		return fmt.Errorf("failed to run yarac: %v, %v", err, string(resultJsonB))
 	}
-	logger.Debugln(string(resultJsonB))
+	logger.Debugf("Running command: %s %s %s\ncommand output: %s", yaracPATH, input, output, string(resultJsonB))
 
 	return nil
 }

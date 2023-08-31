@@ -16,7 +16,12 @@
 package cmd
 
 import (
+	"context"
+	"fmt"
+	"log"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -60,16 +65,13 @@ func init() {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
-	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.yara-rules-server.yaml)")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.yara-rules-server.yaml)")
 }
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
 	cfg = config.LoadConfig(cfgFile)
+	fmt.Printf("config %+v", cfg)
 }
 
 func initLogger() {
@@ -89,10 +91,32 @@ func run(cmd *cobra.Command, args []string) {
 		logger.Fatalf("Falied to compile YARA rules: %v", err)
 	}
 
-	// Start scheduler
-	if err := rules.ScheduledDownload(cfg, logger); err != nil {
-		logger.Fatalf("failed to start download scheduler: %v", err)
-	}
+	ctx, cancel := context.WithCancel(cmd.Context())
 
-	fileserver.Start(cfg.RulePath, logger)
+	// Start listening for OS signals to make sure that we can gracefully exit
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		<-sigs
+		cancel()
+	}()
+
+	// Start scheduler
+	s, err := rules.ScheduledDownload(cfg, logger)
+	if err != nil {
+		logger.Fatalf("Failed to start download scheduler: %v", err)
+	}
+	logger.Infoln("Yara rule download scheduler has been started.")
+
+	// Start file server
+	srv := fileserver.Start(cfg.RulePath, logger)
+	logger.Infoln("Yara rule file server has been started.")
+
+	<-ctx.Done()
+	logger.Infoln("Stopping yara rule download scheduler...")
+	s.Stop()
+	logger.Infoln("Stopping yara rule file server...")
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatalf("Server shutdown failed: %v", err)
+	}
 }

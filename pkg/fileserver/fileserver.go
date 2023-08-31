@@ -16,19 +16,25 @@
 package fileserver
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/sirupsen/logrus"
 )
 
-func Start(rulePath string, logger *logrus.Entry) {
+func Start(rulePath string, logger *logrus.Entry) *http.Server {
 	logger.Infof("Rule file: %s", rulePath)
 	sFile := func(w http.ResponseWriter, req *http.Request) {
 		http.ServeFile(w, req, rulePath)
 	}
 
 	http.HandleFunc("/", sFile)
-	if err := http.ListenAndServe(":8080", nil); err != nil {
-		logger.Errorf("Failed to start http server: %v", err)
-	}
+	server := &http.Server{Addr: ":8080", Handler: nil}
+	go func() {
+		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			logger.Fatalf("Failed to start http server: %v", err)
+		}
+	}()
+
+	return server
 }

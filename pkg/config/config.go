@@ -23,13 +23,13 @@ import (
 )
 
 type Config struct {
-	LogLevel           string   `yaml:"log_level" mapstructure:"LOG_LEVEL"`
-	EnableJSONLog      bool     `yaml:"enable_json_log" mapstructure:"ENABLE_JSON_LOG"`
-	RulePath           string   `yaml:"rule_path" mapstructure:"RULE_PATH"`
-	RuleURLs           []string `yaml:"rule_urls" mapstructure:"RULE_URLS"`
-	YaracPath          string   `yaml:"yarac_path" mapstructure:"YARAC_PATH"`
-	IndexGenPath       string   `yaml:"index_gen_path" mapstructure:"INDEX_GEN_PATH"`
-	RuleUpdateSchedule string   `yaml:"rule_update_schedule" mapstructure:"RULE_UPDATE_SCHEDULE"`
+	LogLevel           string   `yaml:"log_level" mapstructure:"log_level"`
+	EnableJSONLog      bool     `yaml:"enable_json_log" mapstructure:"enable_json_log"`
+	RulePath           string   `yaml:"rule_path" mapstructure:"rule_path"`
+	RuleURLs           []string `yaml:"rule_urls" mapstructure:"rule_urls"`
+	YaracPath          string   `yaml:"yarac_path" mapstructure:"yarac_path"`
+	IndexGenPath       string   `yaml:"index_gen_path" mapstructure:"index_gen_path"`
+	RuleUpdateSchedule string   `yaml:"rule_update_schedule" mapstructure:"rule_update_schedule"`
 }
 
 func LoadConfig(cfgFile string) *Config {

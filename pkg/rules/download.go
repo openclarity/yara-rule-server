@@ -38,11 +38,13 @@ func download(rulePath string, urls []string, logger *logrus.Entry) []string {
 		dirName := fmt.Sprintf("%s%s", path.Dir(rulePath), path.Dir(u.Path))
 		if err := os.MkdirAll(dirName, 0755); err != nil {
 			logger.Errorf("failed to create directory=%s: %v", dirName, err)
+			continue
 		}
 		fileName := fmt.Sprintf("%s/%s", dirName, path.Base(u.Path))
 		logger.Infof("Downloading %s into %s", urls[i], fileName)
 		if err := downloadFile(fileName, urls[i]); err != nil {
 			logger.Errorf("Failed to download file from url=%s: %v", urls[i], err)
+			continue
 		}
 		archives = append(archives, fileName)
 	}
