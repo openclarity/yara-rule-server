@@ -23,6 +23,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/Portshift/go-utils/healthz"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
@@ -86,6 +87,10 @@ func initLogger() {
 }
 
 func run(cmd *cobra.Command, args []string) {
+	healthServer := healthz.NewHealthServer(cfg.HealthCheckAddressAddress)
+	healthServer.Start()
+	healthServer.SetIsReady(false)
+
 	// First we need to download and compile rules before starting the server.
 	if err := rules.DownloadAndCompile(cfg, logger); err != nil {
 		logger.Fatalf("Falied to compile YARA rules: %v", err)
@@ -111,6 +116,8 @@ func run(cmd *cobra.Command, args []string) {
 	// Start file server
 	srv := fileserver.Start(cfg, logger)
 	logger.Infoln("Yara rule file server has been started.")
+
+	healthServer.SetIsReady(true)
 
 	<-ctx.Done()
 	logger.Infoln("Stopping yara rule download scheduler...")

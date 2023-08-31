@@ -23,14 +23,15 @@ import (
 )
 
 type Config struct {
-	LogLevel           string   `mapstructure:"log_level"`
-	EnableJSONLog      bool     `mapstructure:"enable_json_log"`
-	RulePath           string   `mapstructure:"rule_path"`
-	RuleURLs           []string `mapstructure:"rule_urls"`
-	YaracPath          string   `mapstructure:"yarac_path"`
-	IndexGenPath       string   `mapstructure:"index_gen_path"`
-	RuleUpdateSchedule string   `mapstructure:"rule_update_schedule"`
-	ServerAddress      string   `mapstructure:"server_address"`
+	LogLevel                  string   `mapstructure:"log_level"`
+	EnableJSONLog             bool     `mapstructure:"enable_json_log"`
+	RulePath                  string   `mapstructure:"rule_path"`
+	RuleURLs                  []string `mapstructure:"rule_urls"`
+	YaracPath                 string   `mapstructure:"yarac_path"`
+	IndexGenPath              string   `mapstructure:"index_gen_path"`
+	RuleUpdateSchedule        string   `mapstructure:"rule_update_schedule"`
+	ServerAddress             string   `mapstructure:"server_address"`
+	HealthCheckAddressAddress string   `mapstructure:"health_check_address"`
 }
 
 func LoadConfig(cfgFile string) *Config {
@@ -69,4 +70,5 @@ func setDefaults() {
 	viper.SetDefault("index_gen_path", "/usr/local/bin/index_gen.sh")
 	viper.SetDefault("rule_update_schedule", "0 0 * * *")
 	viper.SetDefault("server_address", ":8080")
+	viper.SetDefault("health_check_address", ":8082")
 }
