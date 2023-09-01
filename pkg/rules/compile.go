@@ -27,7 +27,7 @@ func generateIndex(indexGenPATH string, logger *logrus.Entry) error {
 
 	resultJsonB, err := indexGen.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("failed to run index_gen.sh: %v, %v", err, string(resultJsonB))
+		return fmt.Errorf("failed to run index generation command: %v, %v", err, string(resultJsonB))
 	}
 	logger.Debugf("Running command: %s\nCommand output: %s", indexGenPATH, string(resultJsonB))
 

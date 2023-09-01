@@ -43,11 +43,6 @@ docker-push: docker ## Build Yara Rule Server docker image and push it to remote
 	@(echo "Pushing Yara Rule Server docker image [${DOCKER_IMAGE}:${DOCKER_TAG}] ..." )
 	@(docker push ${DOCKER_IMAGE}:${DOCKER_TAG})
 
-.PHONY: api
-api: ## Generating API code
-	@(echo "Generating API code ..." )
-	@(cd api; ./generate.sh)
-
 .PHONY: test
 test: ## Run Unit Tests
 	@(go test ./pkg/...)

@@ -29,17 +29,17 @@ import (
 func DownloadAndCompile(cfg *config.Config, logger *logrus.Entry) error {
 	archives := download(cfg.RulePath, cfg.RuleURLs, logger)
 	if len(archives) == 0 {
-		return errors.New("there is no successfully downloaded rules")
+		return errors.New("there are no successfully downloaded rules")
 	}
 	if num := unarchive(archives, logger); num == 0 {
-		return errors.New("there is no successfully unarchived rules")
+		return errors.New("there are no successfully unarchived rules")
 	}
 
 	if err := generateIndex(cfg.IndexGenPath, logger); err != nil {
 		return fmt.Errorf("failed to generate index.yar: %v", err)
 	}
 	if err := compile(cfg.YaracPath, "index.yar", cfg.RulePath, logger); err != nil {
-		return fmt.Errorf("failed to copile index.yar: %v", err)
+		return fmt.Errorf("failed to compile index.yar: %v", err)
 	}
 
 	return nil

@@ -91,7 +91,7 @@ func unzip(src, dest string) error {
 	for _, f := range r.File {
 		err := extractAndWriteFile(f)
 		if err != nil {
-			return fmt.Errorf("failed to extract file=%s: %v", f.Name, err)
+			return fmt.Errorf("failed to extract and write file=%s: %v", f.Name, err)
 		}
 	}
 

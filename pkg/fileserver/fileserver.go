@@ -25,7 +25,7 @@ import (
 )
 
 func Start(cfg *config.Config, logger *logrus.Entry) *http.Server {
-	logger.Infof("Rule file: %s", cfg.RulePath)
+	logger.Infof("Starting file server. Rule file: %s", cfg.RulePath)
 	sFile := func(w http.ResponseWriter, req *http.Request) {
 		http.ServeFile(w, req, cfg.RulePath)
 	}
