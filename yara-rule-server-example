@@ -1,5 +1,4 @@
 enable_json_log: true
-rule_path: /opt/test.yarac
 rule_update_schedule: "0 0 * * *"
 rule_sources:
   - name: "base"

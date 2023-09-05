@@ -30,7 +30,6 @@ type Config struct {
 	EnableJSONLog             bool         `mapstructure:"enable_json_log"`
 	RuleSources               []RuleSource `mapstructure:"rule_sources"`
 	YaracPath                 string       `mapstructure:"yarac_path"`
-	IndexGenPath              string       `mapstructure:"index_gen_path"`
 	RuleUpdateSchedule        string       `mapstructure:"rule_update_schedule"`
 	ServerAddress             string       `mapstructure:"server_address"`
 	HealthCheckAddressAddress string       `mapstructure:"health_check_address"`
