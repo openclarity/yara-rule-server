@@ -24,12 +24,10 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/openclarity/yara-rule-server/pkg/config"
 )
 
-func createYarFilesIndex(sourceDir string, reg *regexp.Regexp, logger *logrus.Entry) ([]string, error) {
+func createYarFileListToIndex(sourceDir string, reg *regexp.Regexp) ([]string, error) {
 	yarFilesToIndex := make([]string, 0)
 	err := filepath.WalkDir(sourceDir, func(path string, file fs.DirEntry, err error) error {
 		// If there was an error walking this file structure return it
@@ -55,8 +53,6 @@ func createYarFilesIndex(sourceDir string, reg *regexp.Regexp, logger *logrus.En
 		return nil
 	})
 
-	logger.Infof("---- indexes to yar inside  %v", yarFilesToIndex)
-
 	return yarFilesToIndex, err
 }
 
@@ -66,11 +62,11 @@ func generateIndexAndCompile(yaracPATH string, yarFilesToIndex []string, tempDir
 	if err != nil {
 		return fmt.Errorf("failed to create temp file: %v", err)
 	}
-	defer tmpIndexFile.Close()
 
 	for _, yarFile := range yarFilesToIndex {
 		tmpIndexFile.WriteString(fmt.Sprintf("include \"%s\"\n", yarFile))
 	}
+	tmpIndexFile.Close()
 
 	// Generate compiled rules in a temp directory
 	tmpCompiledFile, err := os.CreateTemp(tempDir, "compiled")
@@ -82,6 +78,9 @@ func generateIndexAndCompile(yaracPATH string, yarFilesToIndex []string, tempDir
 		return fmt.Errorf("failed to compile %s: %v", tmpIndexFile.Name(), err)
 	}
 
+	// Remove index temp index file
+	os.Remove(tmpIndexFile.Name())
+
 	// Now we have the compile rules atomically move
 	// it into the location to be served by the http server.
 	if err := os.Rename(tmpCompiledFile.Name(), config.RulePath); err != nil {
@@ -92,7 +91,7 @@ func generateIndexAndCompile(yaracPATH string, yarFilesToIndex []string, tempDir
 }
 
 func compile(yaracPATH, input, output string) error {
-	yarac := exec.Command(yaracPATH, input, output)
+	yarac := exec.Command(yaracPATH, "-w", input, output)
 
 	stdoutStderrBytes, err := yarac.CombinedOutput()
 	if err != nil {

@@ -79,14 +79,11 @@ func DownloadAndCompile(cfg *config.Config, logger *logrus.Entry) error {
 			}
 		}
 
-		yarFiles, err := createYarFilesIndex(sourceDir, reg, logger)
+		yarFiles, err := createYarFileListToIndex(sourceDir, reg)
 		if err != nil {
 			continue
 		}
 		yarFilesToIndex = append(yarFilesToIndex, yarFiles...)
-
-		logger.Infof("---- indexes to yar outside --------  %v", yarFilesToIndex)
-
 	}
 
 	if err := generateIndexAndCompile(cfg.YaracPath, yarFilesToIndex, tempDir); err != nil {
