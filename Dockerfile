@@ -7,25 +7,34 @@ RUN apk add --update --no-cache gcc g++ git ca-certificates build-base
 COPY . /build
 WORKDIR /build
 
+ARG VERSION
 ARG BUILD_TIMESTAMP
-ARG IMAGE_VERSION
+ARG COMMIT_HASH
+ARG TARGETOS
+ARG TARGETARCH
 
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-    CGO_ENABLED=0 \
+    GOOS=${TARGETOS} GOARCH=${TARGETARCH} CGO_ENABLED=0 \
     go build \
-    -ldflags="-s -w" \
+    -ldflags="-s -w \
+        -X 'github.com/openclarity/yara-rule-server/pkg/version.Version=${VERSION}' \
+        -X 'github.com/openclarity/yara-rule-server/pkg/version.CommitHash=${COMMIT_HASH}' \
+        -X 'github.com/openclarity/yara-rule-server/pkg/version.BuildTimestamp=${BUILD_TIMESTAMP}'" \
     -o bin/yara-rule-server main.go
 
-FROM ubuntu:22.04
 
-RUN apt update
-RUN apt install -y util-linux ca-certificates yara
-ADD https://raw.githubusercontent.com/Yara-Rules/rules/master/index_gen.sh /usr/local/bin
-RUN chmod 755 /usr/local/bin/index_gen.sh
+
+FROM alpine:3.17
+
+RUN apk upgrade
+RUN apk add util-linux
+RUN apk add --update yara --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing
+RUN mkdir /etc/yara-rule-server
 
 WORKDIR /app
 
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /build/bin/yara-rule-server ./yara-rule-server
 
 WORKDIR /opt

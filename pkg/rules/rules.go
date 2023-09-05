@@ -16,8 +16,11 @@
 package rules
 
 import (
-	"errors"
 	"fmt"
+	"os"
+	"path"
+	"path/filepath"
+	"regexp"
 	"time"
 
 	"github.com/go-co-op/gocron"
@@ -27,19 +30,67 @@ import (
 )
 
 func DownloadAndCompile(cfg *config.Config, logger *logrus.Entry) error {
-	archives := download(cfg.RulePath, cfg.RuleURLs, logger)
-	if len(archives) == 0 {
-		return errors.New("there are no successfully downloaded rules")
+	// First try to download new copies of all the sources
+	yarFilesToIndex := make([]string, 0)
+	tempDir := path.Join(config.CacheDir, "tmp")
+	if err := os.MkdirAll(tempDir, 0755); err != nil {
+		logger.Errorf("Failed to create temp directory: %v", err)
 	}
-	if num := unarchive(archives, logger); num == 0 {
-		return errors.New("there are no successfully unarchived rules")
+	for _, source := range cfg.RuleSources {
+		// Create directory for this source if it doesn't exist
+		sourceDir := path.Join(config.CacheDir, "sources", source.Name)
+		if err := os.MkdirAll(sourceDir, 0755); err != nil {
+			logger.Errorf("failed to create directory=%s: %v", sourceDir, err)
+			continue
+		}
+
+		// Download the source URL.
+		tmpSourceDir, err := os.MkdirTemp(tempDir, source.Name+"-yara-rule")
+		if err != nil {
+			logger.Errorf("failed to create temp directory for %s: %v", source.Name, err)
+			continue
+		}
+
+		fileName := filepath.Join(tmpSourceDir, source.Name+".zip")
+		logger.Infof("Downloading %s into %s", source.URL, fileName)
+		if err := downloadFile(fileName, source.URL); err != nil {
+			logger.Errorf("Failed to download rule source, skipping / using the last downloaded URL=%s: error=%v", source.URL, err)
+			continue
+		}
+		logger.Infof("Unarchive rules file=%s into %s", fileName, tmpSourceDir)
+		if err := unzip(fileName, tmpSourceDir); err != nil {
+			logger.Errorf("Failed to unacrhive file=%s: %v", fileName, err)
+			continue
+		}
+
+		// Replace contents of source dir with the downloaded and unarchived data
+		if err := os.RemoveAll(sourceDir); err != nil {
+			logger.Errorf("Failed to remove previous sources: %v", err)
+		}
+		if err := os.Rename(tmpSourceDir, sourceDir); err != nil {
+			logger.Errorf("Failed to move downloaded source: %v", err)
+		}
+
+		var reg *regexp.Regexp
+		if source.ExcludeRegex != "" {
+			reg, err = regexp.Compile(source.ExcludeRegex)
+			if err != nil {
+				logger.Errorf("Failed to compile regexp %s: %v", source.ExcludeRegex, err)
+			}
+		}
+
+		yarFiles, err := createYarFilesIndex(sourceDir, reg, logger)
+		if err != nil {
+			continue
+		}
+		yarFilesToIndex = append(yarFilesToIndex, yarFiles...)
+
+		logger.Infof("---- indexes to yar outside --------  %v", yarFilesToIndex)
+
 	}
 
-	if err := generateIndex(cfg.IndexGenPath, logger); err != nil {
-		return fmt.Errorf("failed to generate index.yar: %v", err)
-	}
-	if err := compile(cfg.YaracPath, "index.yar", cfg.RulePath, logger); err != nil {
-		return fmt.Errorf("failed to compile index.yar: %v", err)
+	if err := generateIndexAndCompile(cfg.YaracPath, yarFilesToIndex, tempDir); err != nil {
+		return fmt.Errorf("failed to create compiled rules: %v", err)
 	}
 
 	return nil

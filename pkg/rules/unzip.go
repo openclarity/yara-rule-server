@@ -20,25 +20,9 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
-
-	"github.com/sirupsen/logrus"
 )
-
-func unarchive(archives []string, logger *logrus.Entry) uint64 {
-	var num uint64
-	for i := range archives {
-		logger.Infof("Unarchive rules: file=%s", archives[i])
-		if err := unzip(archives[i], path.Dir(archives[i])); err != nil {
-			logger.Errorf("Failed to unacrhive file=%s: %v", archives[i], err)
-			continue
-		}
-		num++
-	}
-	return num
-}
 
 func unzip(src, dest string) error {
 	r, err := zip.OpenReader(src)

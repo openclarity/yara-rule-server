@@ -16,22 +16,30 @@
 package config
 
 import (
-	"os"
-
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
+const (
+	CacheDir = "/var/lib/yara-rule-server"
+	RulePath = "/var/lib/yara-rule-server/compiled"
+)
+
 type Config struct {
-	LogLevel                  string   `mapstructure:"log_level"`
-	EnableJSONLog             bool     `mapstructure:"enable_json_log"`
-	RulePath                  string   `mapstructure:"rule_path"`
-	RuleURLs                  []string `mapstructure:"rule_urls"`
-	YaracPath                 string   `mapstructure:"yarac_path"`
-	IndexGenPath              string   `mapstructure:"index_gen_path"`
-	RuleUpdateSchedule        string   `mapstructure:"rule_update_schedule"`
-	ServerAddress             string   `mapstructure:"server_address"`
-	HealthCheckAddressAddress string   `mapstructure:"health_check_address"`
+	LogLevel                  string       `mapstructure:"log_level"`
+	EnableJSONLog             bool         `mapstructure:"enable_json_log"`
+	RuleSources               []RuleSource `mapstructure:"rule_sources"`
+	YaracPath                 string       `mapstructure:"yarac_path"`
+	IndexGenPath              string       `mapstructure:"index_gen_path"`
+	RuleUpdateSchedule        string       `mapstructure:"rule_update_schedule"`
+	ServerAddress             string       `mapstructure:"server_address"`
+	HealthCheckAddressAddress string       `mapstructure:"health_check_address"`
+}
+
+type RuleSource struct {
+	Name         string `mapstructure:"name"`
+	URL          string `mapstructure:"url"`
+	ExcludeRegex string `mapstructure:"exclude_regex"`
 }
 
 func LoadConfig(cfgFile string) *Config {
@@ -39,14 +47,8 @@ func LoadConfig(cfgFile string) *Config {
 		// Use config file from the flag.
 		viper.SetConfigFile(cfgFile)
 	} else {
-		// Find home directory.
-		home, err := os.UserHomeDir()
-		cobra.CheckErr(err)
-
-		// Search config in home directory with name ".kubeclarity" (without extension).
-		viper.AddConfigPath(home)
 		viper.SetConfigType("yaml")
-		viper.SetConfigName(".yara-rule-server")
+		viper.SetConfigFile("/etc/yara-rule-server/config.yaml")
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match
@@ -67,7 +69,6 @@ func LoadConfig(cfgFile string) *Config {
 func setDefaults() {
 	viper.SetDefault("log_level", "info")
 	viper.SetDefault("yarac_path", "/usr/bin/yarac")
-	viper.SetDefault("index_gen_path", "/usr/local/bin/index_gen.sh")
 	viper.SetDefault("rule_update_schedule", "0 0 * * *")
 	viper.SetDefault("server_address", ":8080")
 	viper.SetDefault("health_check_address", ":8082")

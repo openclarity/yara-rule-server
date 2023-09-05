@@ -13,37 +13,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package rules
+package version
 
-import (
-	"fmt"
-	"io"
-	"net/http"
-	"os"
+import "fmt"
+
+// overridden using ldflags.
+var (
+	Version        string
+	CommitHash     string
+	BuildTimestamp string
 )
 
-func downloadFile(filepath string, url string) error {
-	out, err := os.Create(filepath)
-	if err != nil {
-		return fmt.Errorf("failed to create ouptut file=%s: %v", filepath, err)
-	}
-
-	defer out.Close()
-
-	resp, err := http.Get(url)
-	if err != nil {
-		return fmt.Errorf("failed to get url: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("failed to get url=%s: %s", url, resp.Status)
-	}
-
-	_, err = io.Copy(out, resp.Body)
-	if err != nil {
-		return fmt.Errorf("failed to write file=%s: %v", filepath, err)
-	}
-
-	return nil
+func String() string {
+	return fmt.Sprintf("%s (%s)", Version, CommitHash)
 }

@@ -17,31 +17,87 @@ package rules
 
 import (
 	"fmt"
+	"io/fs"
+	"os"
 	"os/exec"
+	"path/filepath"
+	"regexp"
+	"strings"
 
 	"github.com/sirupsen/logrus"
+
+	"github.com/openclarity/yara-rule-server/pkg/config"
 )
 
-func generateIndex(indexGenPATH string, logger *logrus.Entry) error {
-	indexGen := exec.Command(indexGenPATH)
+func createYarFilesIndex(sourceDir string, reg *regexp.Regexp, logger *logrus.Entry) ([]string, error) {
+	yarFilesToIndex := make([]string, 0)
+	err := filepath.WalkDir(sourceDir, func(path string, file fs.DirEntry, err error) error {
+		// If there was an error walking this file structure return it
+		if err != nil {
+			return err
+		}
 
-	resultJsonB, err := indexGen.CombinedOutput()
+		// We are only looking for files ending in .yar.
+		// So return if it does not have that suffix or is a directory.
+		if !strings.HasSuffix(path, ".yar") || file.IsDir() {
+			return nil
+		}
+
+		// We've got a yar file, now we need to check that its not one
+		// that should be excluded based on the configuration.
+		// If we match the regex return nil so that this file is ignored.
+		if reg != nil && reg.MatchString(path) {
+			return nil
+		}
+
+		yarFilesToIndex = append(yarFilesToIndex, path)
+
+		return nil
+	})
+
+	logger.Infof("---- indexes to yar inside  %v", yarFilesToIndex)
+
+	return yarFilesToIndex, err
+}
+
+func generateIndexAndCompile(yaracPATH string, yarFilesToIndex []string, tempDir string) error {
+	// Write index file so that we can pass it to yarac
+	tmpIndexFile, err := os.CreateTemp(tempDir, "index")
 	if err != nil {
-		return fmt.Errorf("failed to run index generation command: %v, %v", err, string(resultJsonB))
+		return fmt.Errorf("failed to create temp file: %v", err)
 	}
-	logger.Debugf("Running command: %s\nCommand output: %s", indexGenPATH, string(resultJsonB))
+	defer tmpIndexFile.Close()
+
+	for _, yarFile := range yarFilesToIndex {
+		tmpIndexFile.WriteString(fmt.Sprintf("include \"%s\"\n", yarFile))
+	}
+
+	// Generate compiled rules in a temp directory
+	tmpCompiledFile, err := os.CreateTemp(tempDir, "compiled")
+	if err != nil {
+		return fmt.Errorf("failed to create temp file: %v", err)
+	}
+	err = compile(yaracPATH, tmpIndexFile.Name(), tmpCompiledFile.Name())
+	if err != nil {
+		return fmt.Errorf("failed to compile %s: %v", tmpIndexFile.Name(), err)
+	}
+
+	// Now we have the compile rules atomically move
+	// it into the location to be served by the http server.
+	if err := os.Rename(tmpCompiledFile.Name(), config.RulePath); err != nil {
+		return fmt.Errorf("failed to move compiled yara rules: %v", err)
+	}
 
 	return nil
 }
 
-func compile(yaracPATH, input, output string, logger *logrus.Entry) error {
+func compile(yaracPATH, input, output string) error {
 	yarac := exec.Command(yaracPATH, input, output)
 
-	resultJsonB, err := yarac.CombinedOutput()
+	stdoutStderrBytes, err := yarac.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("failed to run yarac: %v, %v", err, string(resultJsonB))
+		return fmt.Errorf("failed to run yarac: %v, %v", err, string(stdoutStderrBytes))
 	}
-	logger.Debugf("Running command: %s %s %s\ncommand output: %s", yaracPATH, input, output, string(resultJsonB))
 
 	return nil
 }

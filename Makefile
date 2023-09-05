@@ -34,9 +34,10 @@ build: ## Build Yara Rule Server
 .PHONY: docker
 docker: ## Build Yara Rule Server docker image
 	@(echo "Building Yara Rule Server docker image [${DOCKER_IMAGE}:${DOCKER_TAG}] ..." )
-	@(docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} . \
+	@(docker build --build-arg VERSION=${VERSION} \
 		--build-arg BUILD_TIMESTAMP=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ") \
-		--build-arg IMAGE_VERSION=${VERSION})
+		--build-arg COMMIT_HASH=$(shell git rev-parse HEAD) \
+		-t ${DOCKER_IMAGE}:${DOCKER_TAG} .)
 
 .PHONY: docker-push
 docker-push: docker ## Build Yara Rule Server docker image and push it to remote
