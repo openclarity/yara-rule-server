@@ -36,6 +36,7 @@ WORKDIR /app
 
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /build/bin/yara-rule-server ./yara-rule-server
+COPY yara-rule-server-example /etc/yara-rule-server/config.yaml
 
 WORKDIR /opt
 
