@@ -64,7 +64,7 @@ func generateIndexAndCompile(yaracPATH string, yarFilesToIndex []string, tempDir
 	}
 
 	for _, yarFile := range yarFilesToIndex {
-		tmpIndexFile.WriteString(fmt.Sprintf("include \"%s\"\n", yarFile))
+		tmpIndexFile.WriteString(fmt.Sprintf("include \"%s\"\n", yarFile)) // nolint:errcheck
 	}
 	tmpIndexFile.Close()
 

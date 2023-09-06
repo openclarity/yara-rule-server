@@ -1,0 +1,39 @@
+name: Build & Push
+
+on:
+  workflow_call:
+    inputs:
+      image_tag:
+        required: true
+        type: string
+        description: 'Image tag to build and push.'
+      push:
+        required: false
+        type: string
+        description: 'If set to true, push the image.'
+        default: false
+      upload:
+        required: false
+        type: string
+        description: 'If set to true, upload the image.'
+        default: false
+
+jobs:
+  timestamp:
+    runs-on: ubuntu-latest
+    outputs:
+      timestamp: ${{ steps.timestamp.outputs.timestamp }}
+    steps:
+      - name: Get current timestamp
+        id: timestamp
+        run: echo "::set-output name=timestamp::$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+
+  yara-rule-server:
+    needs: timestamp
+    uses: ./.github/workflows/build-and-push-component.yaml
+    with:
+      dockerfile: Dockerfile
+      image_name: yara-rule-server
+      image_tag: ${{ inputs.image_tag }}
+      push: ${{ inputs.push }}
+      upload: ${{ inputs.upload }}
