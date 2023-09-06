@@ -34,41 +34,54 @@ func DownloadAndCompile(cfg *config.Config, logger *logrus.Entry) error {
 	yarFilesToIndex := make([]string, 0)
 	tempDir := path.Join(config.CacheDir, "tmp")
 	if err := os.MkdirAll(tempDir, 0755); err != nil {
-		logger.Errorf("Failed to create temp directory: %v", err)
+		return fmt.Errorf("failed to create yara rule server temp directory. tempDir=%s error=%v", tempDir, err)
 	}
 	for _, source := range cfg.RuleSources {
+		prevStepFailed := false
 		// Create directory for this source if it doesn't exist
 		sourceDir := path.Join(config.CacheDir, "sources", source.Name)
 		if err := os.MkdirAll(sourceDir, 0755); err != nil {
-			logger.Errorf("failed to create directory=%s: %v", sourceDir, err)
-			continue
+			logger.Errorf("failed to create directory %s. Using the last successful download if available: error=%v", sourceDir, err)
+			prevStepFailed = true
 		}
 
 		// Download the source URL.
-		tmpSourceDir, err := os.MkdirTemp(tempDir, source.Name+"-yara-rule")
-		if err != nil {
-			logger.Errorf("failed to create temp directory for %s: %v", source.Name, err)
-			continue
+		//tmpSourceDir, err := os.MkdirTemp(tempDir, source.Name+"-yara-rule")
+		var tmpSourceDir string
+		var err error
+		if !prevStepFailed {
+			if tmpSourceDir, err = os.MkdirTemp(tempDir, source.Name+"-yara-rule"); err != nil {
+				logger.Errorf("failed to create temp directory for %s Using the last successful download if available: error=%v", source.Name, err)
+				prevStepFailed = true
+			}
 		}
 
-		fileName := filepath.Join(tmpSourceDir, source.Name+".zip")
-		logger.Infof("Downloading %s into %s", source.URL, fileName)
-		if err := downloadFile(fileName, source.URL); err != nil {
-			logger.Errorf("Failed to download rule source, skipping / using the last downloaded URL=%s: error=%v", source.URL, err)
-			continue
+		var fileName string
+		if !prevStepFailed {
+			fileName = filepath.Join(tmpSourceDir, source.Name+".zip")
+			logger.Infof("Downloading %s into %s", source.URL, fileName)
+			if err := downloadFile(fileName, source.URL); err != nil {
+				logger.Errorf("Failed to download rule source %s. Using the last successful download if available. URL=%s: error=%v", source.Name, source.URL, err)
+				prevStepFailed = true
+			}
 		}
-		logger.Infof("Unarchive rules file=%s into %s", fileName, tmpSourceDir)
-		if err := unzip(fileName, tmpSourceDir); err != nil {
-			logger.Errorf("Failed to unacrhive file=%s: %v", fileName, err)
-			continue
+
+		if !prevStepFailed {
+			logger.Infof("Unarchive rules file=%s into %s", fileName, tmpSourceDir)
+			if err := unzip(fileName, tmpSourceDir); err != nil {
+				logger.Errorf("Failed to unarchive source %s. Using last successful download if available. File=%s: %v", source.Name, fileName, err)
+				prevStepFailed = true
+			}
 		}
 
 		// Replace contents of source dir with the downloaded and unarchived data
-		if err := os.RemoveAll(sourceDir); err != nil {
-			logger.Errorf("Failed to remove previous sources: %v", err)
-		}
-		if err := os.Rename(tmpSourceDir, sourceDir); err != nil {
-			logger.Errorf("Failed to move downloaded source: %v", err)
+		if !prevStepFailed {
+			if err = os.RemoveAll(sourceDir); err != nil {
+				logger.Errorf("Failed to remove previous sources: %v", err)
+			}
+			if err = os.Rename(tmpSourceDir, sourceDir); err != nil {
+				logger.Errorf("Failed to move downloaded source: %v", err)
+			}
 		}
 
 		var reg *regexp.Regexp
@@ -76,11 +89,13 @@ func DownloadAndCompile(cfg *config.Config, logger *logrus.Entry) error {
 			reg, err = regexp.Compile(source.ExcludeRegex)
 			if err != nil {
 				logger.Errorf("Failed to compile regexp %s: %v", source.ExcludeRegex, err)
+				continue
 			}
 		}
 
 		yarFiles, err := createYarFileListToIndex(sourceDir, reg)
 		if err != nil {
+			logger.Errorf("failed to create list of files for indexing, so skipping the source %s: error=%v", source.Name, err)
 			continue
 		}
 		yarFilesToIndex = append(yarFilesToIndex, yarFiles...)
