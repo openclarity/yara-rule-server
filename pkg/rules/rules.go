@@ -96,8 +96,7 @@ func atomicDownloadAndReplace(source config.RuleSource, sourceDir, tempDir strin
 		return fmt.Errorf("failed to create temp directory for %s Using the last successful download if available: %w", source.Name, err)
 	}
 
-	var fileName string
-	fileName = filepath.Join(tmpSourceDir, source.Name+".zip")
+	fileName := filepath.Join(tmpSourceDir, source.Name+".zip")
 	logger.Infof("Downloading %s into %s", source.URL, fileName)
 	if err := downloadFile(fileName, source.URL); err != nil {
 		return fmt.Errorf("failed to download rule source %s. Using the last successful download if available. URL=%s: %v", source.Name, source.URL, err)
@@ -110,10 +109,10 @@ func atomicDownloadAndReplace(source config.RuleSource, sourceDir, tempDir strin
 
 	// Replace contents of source dir with the downloaded and unarchived data
 	if err := os.RemoveAll(sourceDir); err != nil {
-		logger.Errorf("Failed to remove previous sources: %v", err)
+		return fmt.Errorf("failed to remove previous sources: %v", err)
 	}
 	if err := os.Rename(tmpSourceDir, sourceDir); err != nil {
-		logger.Errorf("failed to move downloaded source: %v", err)
+		return fmt.Errorf("failed to move downloaded source: %v", err)
 	}
 
 	return nil
