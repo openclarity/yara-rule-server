@@ -34,13 +34,13 @@ func DownloadAndCompile(cfg *config.Config, logger *logrus.Entry) error {
 	yarFilesToIndex := make([]string, 0)
 	tempDir := path.Join(config.CacheDir, "tmp")
 	if err := os.MkdirAll(tempDir, 0755); err != nil {
-		return fmt.Errorf("failed to create yara rule server temp directory. tempDir=%s: %w", tempDir, err)
+		return fmt.Errorf("failed to create yara rule server temp directory. tempDir=%s: %v", tempDir, err)
 	}
 	for _, source := range cfg.RuleSources {
 		// Create directory for this source if it doesn't exist
 		sourceDir := path.Join(config.CacheDir, "sources", source.Name)
 		if err := os.MkdirAll(sourceDir, 0755); err != nil {
-			logger.Errorf("failed to create directory %s. Using the last successful download if available: %w", sourceDir, err)
+			logger.Errorf("Failed to create directory %s. Using the last successful download if available: %v", sourceDir, err)
 			continue
 		}
 
@@ -93,7 +93,7 @@ func ScheduledDownload(cfg *config.Config, logger *logrus.Entry) (*gocron.Schedu
 func atomicDownloadAndReplace(source config.RuleSource, sourceDir, tempDir string, logger *logrus.Entry) error {
 	tmpSourceDir, err := os.MkdirTemp(tempDir, source.Name+"-yara-rule")
 	if err != nil {
-		return fmt.Errorf("failed to create temp directory for %s Using the last successful download if available: %w", source.Name, err)
+		return fmt.Errorf("failed to create temp directory for %s Using the last successful download if available: %v", source.Name, err)
 	}
 
 	fileName := filepath.Join(tmpSourceDir, source.Name+".zip")
