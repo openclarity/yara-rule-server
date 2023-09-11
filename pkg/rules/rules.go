@@ -40,7 +40,7 @@ func DownloadAndCompile(cfg *config.Config, logger *logrus.Entry) error {
 		// Create directory for this source if it doesn't exist
 		sourceDir := path.Join(config.CacheDir, "sources", source.Name)
 		if err := os.MkdirAll(sourceDir, 0755); err != nil {
-			logger.Errorf("Failed to create directory %s. Using the last successful download if available: %v", sourceDir, err)
+			logger.WithError(err).Errorf("Failed to create directory %s. Using the last successful download if available", sourceDir)
 			continue
 		}
 
@@ -93,26 +93,26 @@ func ScheduledDownload(cfg *config.Config, logger *logrus.Entry) (*gocron.Schedu
 func atomicDownloadAndReplace(source config.RuleSource, sourceDir, tempDir string, logger *logrus.Entry) error {
 	tmpSourceDir, err := os.MkdirTemp(tempDir, source.Name+"-yara-rule")
 	if err != nil {
-		return fmt.Errorf("failed to create temp directory for %s Using the last successful download if available: %v", source.Name, err)
+		return fmt.Errorf("failed to create temp directory for %s Using the last successful download if available: %w", source.Name, err)
 	}
 
 	fileName := filepath.Join(tmpSourceDir, source.Name+".zip")
 	logger.Infof("Downloading %s into %s", source.URL, fileName)
 	if err := downloadFile(fileName, source.URL); err != nil {
-		return fmt.Errorf("failed to download rule source %s. Using the last successful download if available. URL=%s: %v", source.Name, source.URL, err)
+		return fmt.Errorf("failed to download rule source %s. Using the last successful download if available. URL=%s: %w", source.Name, source.URL, err)
 	}
 
 	logger.Infof("Unarchive rules file=%s into %s", fileName, tmpSourceDir)
 	if err := unzip(fileName, tmpSourceDir); err != nil {
-		return fmt.Errorf("failed to unarchive source %s. Using last successful download if available. File=%s: %v", source.Name, fileName, err)
+		return fmt.Errorf("failed to unarchive source %s. Using last successful download if available. File=%s: %w", source.Name, fileName, err)
 	}
 
 	// Replace contents of source dir with the downloaded and unarchived data
 	if err := os.RemoveAll(sourceDir); err != nil {
-		return fmt.Errorf("failed to remove previous sources: %v", err)
+		return fmt.Errorf("failed to remove previous sources: %w", err)
 	}
 	if err := os.Rename(tmpSourceDir, sourceDir); err != nil {
-		return fmt.Errorf("failed to move downloaded source: %v", err)
+		return fmt.Errorf("failed to move downloaded source: %w", err)
 	}
 
 	return nil
