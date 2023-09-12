@@ -1,15 +1,4 @@
-approved = [
-    "mit",
-    "apache-2.0",
-    "bsd-3-clause",
-    "bsd-2-clause",
-    "mpl-2.0",
-    "isc"
-]
-
-[header]
-ignoreFiles = ["*mock_*.go"]
-template = """// Copyright © :YEAR: Cisco Systems, Inc. and its affiliates.
+// Copyright © 2023 Cisco Systems, Inc. and its affiliates.
 // All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,4 +11,19 @@ template = """// Copyright © :YEAR: Cisco Systems, Inc. and its affiliates.
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
-// limitations under the License."""
+// limitations under the License.
+
+package version
+
+import "fmt"
+
+// overridden using ldflags.
+var (
+	Version        string
+	CommitHash     string
+	BuildTimestamp string
+)
+
+func String() string {
+	return fmt.Sprintf("%s (%s)", Version, CommitHash)
+}
