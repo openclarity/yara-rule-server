@@ -25,7 +25,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 
 
 
-FROM alpine:3.17
+FROM alpine:3.18
 
 RUN apk upgrade
 RUN apk add util-linux
