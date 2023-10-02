@@ -21,8 +21,8 @@ import (
 )
 
 const (
-	CacheDir = "/var/lib/yara-rule-server"
-	RulePath = "/var/lib/yara-rule-server/compiled"
+	CompiledRuleFileName = "compiled"
+	TempDirName          = "tmp"
 )
 
 type Config struct {
@@ -33,6 +33,7 @@ type Config struct {
 	RuleUpdateSchedule        string       `mapstructure:"rule_update_schedule"`
 	ServerAddress             string       `mapstructure:"server_address"`
 	HealthCheckAddressAddress string       `mapstructure:"health_check_address"`
+	CacheDir                  string       `mapstructure:"cache_dir"`
 }
 
 type RuleSource struct {
@@ -71,4 +72,5 @@ func setDefaults() {
 	viper.SetDefault("rule_update_schedule", "0 0 * * *")
 	viper.SetDefault("server_address", ":8080")
 	viper.SetDefault("health_check_address", ":8082")
+	viper.SetDefault("cache_dir", "/var/lib/yara-rule-server")
 }

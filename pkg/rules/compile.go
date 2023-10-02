@@ -20,6 +20,7 @@ import (
 	"io/fs"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -56,7 +57,7 @@ func createYarFileListToIndex(sourceDir string, reg *regexp.Regexp) ([]string, e
 	return yarFilesToIndex, err
 }
 
-func generateIndexAndCompile(yaracPATH string, yarFilesToIndex []string, tempDir string) error {
+func generateIndexAndCompile(cfg *config.Config, yarFilesToIndex []string, tempDir string) error {
 	// Write index file so that we can pass it to yarac
 	tmpIndexFile, err := os.CreateTemp(tempDir, "index")
 	if err != nil {
@@ -73,7 +74,7 @@ func generateIndexAndCompile(yaracPATH string, yarFilesToIndex []string, tempDir
 	if err != nil {
 		return fmt.Errorf("failed to create temp file: %v", err)
 	}
-	err = compile(yaracPATH, tmpIndexFile.Name(), tmpCompiledFile.Name())
+	err = compile(cfg.YaracPath, tmpIndexFile.Name(), tmpCompiledFile.Name())
 	if err != nil {
 		return fmt.Errorf("failed to compile %s: %v", tmpIndexFile.Name(), err)
 	}
@@ -83,7 +84,8 @@ func generateIndexAndCompile(yaracPATH string, yarFilesToIndex []string, tempDir
 
 	// Now we have the compile rules atomically move
 	// it into the location to be served by the http server.
-	if err := os.Rename(tmpCompiledFile.Name(), config.RulePath); err != nil {
+	compiledRulePath := path.Join(cfg.CacheDir, config.CompiledRuleFileName)
+	if err := os.Rename(tmpCompiledFile.Name(), compiledRulePath); err != nil {
 		return fmt.Errorf("failed to move compiled yara rules: %v", err)
 	}
 

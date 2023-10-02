@@ -18,6 +18,7 @@ package fileserver
 import (
 	"errors"
 	"net/http"
+	"path"
 
 	"github.com/sirupsen/logrus"
 
@@ -25,9 +26,10 @@ import (
 )
 
 func Start(cfg *config.Config, logger *logrus.Entry) *http.Server {
-	logger.Infof("Starting file server. Rule file: %s", config.RulePath)
+	compiledRulePath := path.Join(cfg.CacheDir, config.CompiledRuleFileName)
+	logger.Infof("Starting file server. Rule file: %s", compiledRulePath)
 	sFile := func(w http.ResponseWriter, req *http.Request) {
-		http.ServeFile(w, req, config.RulePath)
+		http.ServeFile(w, req, compiledRulePath)
 	}
 
 	http.HandleFunc("/", sFile)
