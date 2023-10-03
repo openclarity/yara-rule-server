@@ -32,13 +32,13 @@ import (
 func DownloadAndCompile(cfg *config.Config, logger *logrus.Entry) error {
 	// First try to download new copies of all the sources
 	yarFilesToIndex := make([]string, 0)
-	tempDir := path.Join(config.CacheDir, "tmp")
+	tempDir := path.Join(cfg.CacheDir, config.TempDirName)
 	if err := os.MkdirAll(tempDir, 0755); err != nil {
 		return fmt.Errorf("failed to create yara rule server temp directory. tempDir=%s: %v", tempDir, err)
 	}
 	for _, source := range cfg.RuleSources {
 		// Create directory for this source if it doesn't exist
-		sourceDir := path.Join(config.CacheDir, "sources", source.Name)
+		sourceDir := path.Join(cfg.CacheDir, "sources", source.Name)
 		if err := os.MkdirAll(sourceDir, 0755); err != nil {
 			logger.WithError(err).Errorf("Failed to create directory %s. Using the last successful download if available", sourceDir)
 			continue
@@ -67,7 +67,7 @@ func DownloadAndCompile(cfg *config.Config, logger *logrus.Entry) error {
 		yarFilesToIndex = append(yarFilesToIndex, yarFiles...)
 	}
 
-	if err := generateIndexAndCompile(cfg.YaracPath, yarFilesToIndex, tempDir); err != nil {
+	if err := generateIndexAndCompile(cfg, yarFilesToIndex, tempDir); err != nil {
 		return fmt.Errorf("failed to create compiled rules: %v", err)
 	}
 
