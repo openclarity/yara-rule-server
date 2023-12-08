@@ -29,7 +29,7 @@ FROM alpine:3.19
 
 RUN apk upgrade
 RUN apk add util-linux
-RUN apk add --update yara --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing
+RUN apk add yara
 RUN mkdir /etc/yara-rule-server
 
 WORKDIR /app
