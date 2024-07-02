@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1@sha256:ac85f380a63b13dfcefa89046420e1781752bab202122f8f50032edf31be0021
 
-FROM --platform=$BUILDPLATFORM golang:1.22.4-bullseye@sha256:067c5c7fe6d79f900c5ebe8351166356d6e3bbfcc6f807030e89b9a929252273 AS builder
+FROM --platform=$BUILDPLATFORM golang:1.22.4-bullseye@sha256:a6ecc234d780e8f77b38ae9d55b47193b542a731d26b489812457b93b0576d51 AS builder
 
 ARG TARGETPLATFORM
 
