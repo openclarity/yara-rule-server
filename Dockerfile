@@ -35,7 +35,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
         -X 'github.com/openclarity/yara-rule-server/pkg/version.BuildTimestamp=${BUILD_TIMESTAMP}'" \
     -o /bin/yara-rule-server main.go
 
-FROM alpine:3.20@sha256:0a4eaa0eecf5f8c050e5bba433f58c052be7587ee8af3e8b3910ef9ab5fbe9f5
+FROM alpine:3.22@sha256:8a1f59ffb675680d47db6337b49d22281a139e9d709335b492be023728e11715
 
 RUN apk add --update --no-cache \
     util-linux \
